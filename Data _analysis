@@ -1,0 +1,189 @@
+import pandas as pd
+import numpy as np
+import urllib.parse
+import string
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+# Load the data from files
+def load_file(filename):
+    with open(filename, 'r', encoding="utf-8") as file:
+        lines = file.readlines()
+    # Unquote URL-encoded data
+    return [urllib.parse.unquote(line.strip()) for line in lines]
+
+# Load bad and good queries from text files
+bad_queries = load_file('badqueries.txt')
+good_queries = load_file('goodqueries.txt')
+
+# Create labels for bad and good queries (1 for bad, 0 for good)
+labels = [1] * len(bad_queries) + [0] * len(good_queries)
+
+# Combine the data and labels into a DataFrame
+data = pd.DataFrame({
+    'query': bad_queries + good_queries,
+    'label': labels
+})
+
+# Filter bad and good queries based on labels
+bad_query_data = data[data['label'] == 1]['query']
+good_query_data = data[data['label'] == 0]['query']
+
+# Display the top 10 bad queries
+print("\nTop 10 Bad Queries:")
+print(bad_query_data.head(10))
+
+# Display the top 10 good queries
+print("\nTop 10 Good Queries:")
+print(good_query_data.head(10))
+
+# Function to calculate length of payload
+def calculate_payload_length(query):
+    return len(query)
+
+# Function to count punctuation characters in payload
+def count_punctuation_chars(query):
+    return sum(1 for char in query if char in string.punctuation)
+
+# Perform feature engineering on bad queries
+bad_queries_df = pd.DataFrame({
+    'query': bad_query_data
+})
+
+# Calculate payload length
+bad_queries_df['payload_length'] = bad_queries_df['query'].apply(calculate_payload_length)
+
+# Calculate punctuation characters in payload
+bad_queries_df['punctuation_characters'] = bad_queries_df['query'].apply(count_punctuation_chars)
+
+# Display the calculated features for the top 10 bad queries
+print("\nTop 10 Bad Queries Feature Analysis:")
+print(bad_queries_df[['query', 'payload_length', 'punctuation_characters']].head(10))
+
+# Perform feature engineering on good queries
+good_queries_df = pd.DataFrame({
+    'query': good_query_data
+})
+
+# Calculate payload length for good queries
+good_queries_df['payload_length'] = good_queries_df['query'].apply(calculate_payload_length)
+
+# Calculate punctuation characters in payload for good queries
+good_queries_df['punctuation_characters'] = good_queries_df['query'].apply(count_punctuation_chars)
+
+# Display the calculated features for the top 10 good queries
+print("\nTop 10 Good Queries Feature Analysis:")
+print(good_queries_df[['query', 'payload_length', 'punctuation_characters']].head(10))
+
+# Plot the distribution of the length of the payload for good and bad queries
+plt.figure(figsize=(10, 6))
+
+# Plot the distribution of payload length for bad queries
+sns.histplot(
+    bad_queries_df['payload_length'],
+    kde=True,
+    label='Bad Queries',
+    color='red',
+    alpha=0.6,
+    stat='density',
+    bins=30
+)
+
+# Plot the distribution of payload length for good queries
+sns.histplot(
+    good_queries_df['payload_length'],
+    kde=True,
+    label='Good Queries',
+    color='blue',
+    alpha=0.6,
+    stat='density',
+    bins=30
+)
+
+# Customize the title and labels
+plt.title('Distribution of Payload Length for Good and Bad Queries', fontsize=14)
+plt.xlabel('Payload Length', fontsize=12)
+plt.ylabel('Density', fontsize=12)
+
+# Set the x-axis range from 0 to 250
+plt.xlim(0, 250)
+
+# Set the y-axis range to provide a better view
+plt.ylim(0, None)
+
+# Add a legend and grid for better readability
+plt.legend(loc='best', fontsize=10)
+plt.grid(True, linestyle='--', alpha=0.5)
+
+# Show the plot
+plt.show()
+
+# Plot the distribution of punctuation characters for good and bad queries
+plt.figure(figsize=(10, 6))
+
+# Plot the distribution of punctuation characters for bad queries
+sns.histplot(
+    bad_queries_df['punctuation_characters'],
+    kde=True,
+    label='Bad Queries',
+    color='red',
+    alpha=0.6,
+    stat='density',
+    bins=30
+)
+
+
+# Calculate payload length for good queries
+good_queries_df['payload_length'] = good_queries_df['query'].apply(calculate_payload_length)
+
+# Calculate statistics for bad queries
+bad_mean = bad_queries_df['payload_length'].mean()
+bad_std = bad_queries_df['payload_length'].std()
+bad_min = bad_queries_df['payload_length'].min()
+bad_max = bad_queries_df['payload_length'].max()
+
+print("Bad Queries - Mean Payload Length: {:.2f}".format(bad_mean))
+print("Bad Queries - Standard Deviation: {:.2f}".format(bad_std))
+print("Bad Queries - Minimum Payload Length: {}".format(bad_min))
+print("Bad Queries - Maximum Payload Length: {}".format(bad_max))
+
+# Calculate statistics for good queries
+good_mean = good_queries_df['payload_length'].mean()
+good_std = good_queries_df['payload_length'].std()
+good_min = good_queries_df['payload_length'].min()
+good_max = good_queries_df['payload_length'].max()
+
+print("\nGood Queries - Mean Payload Length: {:.2f}".format(good_mean))
+print("Good Queries - Standard Deviation: {:.2f}".format(good_std))
+print("Good Queries - Minimum Payload Length: {}".format(good_min))
+print("Good Queries - Maximum Payload Length: {}".format(good_max))
+
+
+# Plot the distribution of punctuation characters for good queries
+sns.histplot(
+    good_queries_df['punctuation_characters'],
+    kde=True,
+    label='Good Queries',
+    color='blue',
+    alpha=0.6,
+    stat='density',
+    bins=30
+)
+
+# Customize the title and labels
+plt.title('Distribution of Punctuation Characters for Good and Bad Queries', fontsize=14)
+plt.xlabel('Number of Punctuation Characters', fontsize=12)
+plt.ylabel('Density', fontsize=12)
+
+# Set the x-axis range as needed
+plt.xlim(0, None)
+
+# Set the y-axis range as needed
+plt.ylim(0, None)
+
+# Add a legend and grid for better readability
+plt.legend(loc='best', fontsize=10)
+plt.grid(True, linestyle='--', alpha=0.5)
+
+# Show the plot
+plt.show()
