@@ -5,12 +5,12 @@ import urllib.parse
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import classification_report, confusion_matrix
+from sklearn.metrics import classification_report, confusion_matrix, accuracy_score, f1_score, roc_auc_score
 
 # Setup basic logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-# Load data from file and decode URL-encoded lines
+# Load the data from a file and decode URL-encoded lines
 def load_file(filename):
     with open(filename, 'r', encoding="utf-8") as file:
         lines = file.readlines()
@@ -18,8 +18,8 @@ def load_file(filename):
     data = [urllib.parse.unquote(line.strip()) for line in data]
     return data
 
-# Load data
 logging.info("Loading data...")
+# Load data
 bad_queries = load_file('badqueries.txt')
 good_queries = load_file('goodqueries.txt')
 
@@ -27,7 +27,10 @@ good_queries = load_file('goodqueries.txt')
 queries = bad_queries + good_queries
 
 # Define labels: 1 for bad queries, 0 for good queries
-y = [1] * len(bad_queries) + [0] * len(good_queries)
+labels = [1] * len(bad_queries) + [0] * len(good_queries)
+
+# Assign labels to y
+y = labels
 
 # Prepare vectorizers
 logging.info("Preparing CountVectorizer and TfidfVectorizer...")
@@ -44,35 +47,49 @@ X_tfidf = tfidf_vectorizer.fit_transform(queries)
 X_train_count, X_test_count, y_train, y_test = train_test_split(X_count, y, test_size=0.2, random_state=42)
 X_train_tfidf, X_test_tfidf, _, _ = train_test_split(X_tfidf, y, test_size=0.2, random_state=42)
 
-# Train a RandomForestClassifier using CountVectorizer features
-logging.info("Training RandomForestClassifier with CountVectorizer features...")
-model_count = RandomForestClassifier(n_estimators=50, n_jobs=-1, random_state=42)
+# Train and evaluate models
+
+# Train a Random Forest model using CountVectorizer features
+logging.info("Training Random Forest model with CountVectorizer features...")
+model_count = RandomForestClassifier(n_estimators=100, random_state=42)
 model_count.fit(X_train_count, y_train)
 
-# Evaluate the model using CountVectorizer features
-logging.info("Evaluating model with CountVectorizer features...")
+logging.info("Evaluating model...")
+# Evaluate the model with CountVectorizer features
 predictions_count = model_count.predict(X_test_count)
 print("CountVectorizer Model - Classification Report:")
 print(classification_report(y_test, predictions_count))
 print("CountVectorizer Model - Confusion Matrix:\n", confusion_matrix(y_test, predictions_count))
 
-# Train a RandomForestClassifier using TfidfVectorizer features
-logging.info("Training RandomForestClassifier with TfidfVectorizer features...")
-model_tfidf = RandomForestClassifier(n_estimators=50, n_jobs=-1, random_state=42)
+# Calculate F1 score, accuracy, and ROC AUC for CountVectorizer model
+f1_count = f1_score(y_test, predictions_count)
+accuracy_count = accuracy_score(y_test, predictions_count)
+roc_auc_count = roc_auc_score(y_test, predictions_count)
+print(f"CountVectorizer Model - F1 Score: {f1_count:.5f}, Accuracy: {accuracy_count:.5f}, ROC AUC: {roc_auc_count:.5f}")
+
+# Train a Random Forest model using TfidfVectorizer features
+logging.info("Training Random Forest model with TfidfVectorizer features...")
+model_tfidf = RandomForestClassifier(n_estimators=100, random_state=42)
 model_tfidf.fit(X_train_tfidf, y_train)
 
-# Evaluate the model using TfidfVectorizer features
-logging.info("Evaluating model with TfidfVectorizer features...")
+logging.info("Evaluating model...")
+# Evaluate the model with TfidfVectorizer features
 predictions_tfidf = model_tfidf.predict(X_test_tfidf)
 print("\nTfidfVectorizer Model - Classification Report:")
 print(classification_report(y_test, predictions_tfidf))
 print("TfidfVectorizer Model - Confusion Matrix:\n", confusion_matrix(y_test, predictions_tfidf))
 
-# Save models and vectorizers for later use
+# Calculate F1 score, accuracy, and ROC AUC for TfidfVectorizer model
+f1_tfidf = f1_score(y_test, predictions_tfidf)
+accuracy_tfidf = accuracy_score(y_test, predictions_tfidf)
+roc_auc_tfidf = roc_auc_score(y_test, predictions_tfidf)
+print(f"TfidfVectorizer Model - F1 Score: {f1_tfidf:.5f}, Accuracy: {accuracy_tfidf:.5f}, ROC AUC: {roc_auc_tfidf:.5f}")
+
+# Save the trained models and vectorizers for later use
 logging.info("Saving models and vectorizers...")
-pickle.dump(model_count, open('model_count_rfc.pkl', 'wb'))
-pickle.dump(count_vectorizer, open('Vect_count_rfc.pkl', 'wb'))
-pickle.dump(model_tfidf, open('model_tfidf_rfc.pkl', 'wb'))
-pickle.dump(tfidf_vectorizer, open('Vect_tfidf_rfc.pkl', 'wb'))
+pickle.dump(model_count, open('model_count_rf.pkl', 'wb'))
+pickle.dump(count_vectorizer, open('vect_count_rf.pkl', 'wb'))
+pickle.dump(model_tfidf, open('model_tfidf_rf.pkl', 'wb'))
+pickle.dump(tfidf_vectorizer, open('vect_tfidf_rf.pkl', 'wb'))
 
 logging.info("Process completed successfully.")

@@ -1,0 +1,58 @@
+import pandas as pd
+import numpy as np
+import urllib.parse
+from collections import Counter
+import matplotlib.pyplot as plt
+
+# Load the data from files
+def load_file(filename):
+    with open(filename, 'r', encoding="utf-8") as file:
+        lines = file.readlines()
+    # Unquote URL-encoded data
+    return [urllib.parse.unquote(line.strip()) for line in lines]
+
+# Load bad and good queries from text files
+bad_queries = load_file('badqueries.txt')
+good_queries = load_file('goodqueries.txt')
+
+# Remove duplicate queries
+bad_queries = list(set(bad_queries))
+good_queries = list(set(good_queries))
+
+
+# Combine bad and good queries into a single list
+queries = bad_queries + good_queries
+
+# Count occurrences of each query
+query_counts = Counter(queries)
+
+# Find duplicate queries (queries appearing more than once)
+duplicate_queries = [query for query, count in query_counts.items() if count > 1]
+
+# Display duplicate queries
+if duplicate_queries:
+    print("\nDuplicate queries found in the dataset:")
+    for query in duplicate_queries:
+        print(query)
+else:
+    print("\nNo duplicate queries found in the dataset.")
+
+# Count the total number of good and bad queries
+total_bad_queries = len(bad_queries)
+total_good_queries = len(good_queries)
+
+# Create a bar chart to visualize the distribution of good and bad queries
+labels = ['Bad Queries', 'Good Queries']
+counts = [total_bad_queries, total_good_queries]
+
+plt.figure(figsize=(8, 6))
+bars = plt.bar(labels, counts, color=['red', 'green'])
+plt.title('Distribution of Bad and Good Queries')
+plt.xlabel('Query Type')
+plt.ylabel('Number of Queries')
+# Annotate bars with counts
+for bar in bars:
+    height = bar.get_height()
+    plt.text(bar.get_x() + bar.get_width() / 2, height, f'{int(height)}', ha='center', va='bottom')
+
+plt.show()
